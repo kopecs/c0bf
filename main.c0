@@ -1,0 +1,128 @@
+#use <args>
+#use <conio>
+#use <file>
+#use <string>
+#use <parse>
+
+int execute_program(file_t file, bool debug_mode, int debug_count);
+
+void debug(char[] tape, int dp, int n);
+
+int main() {
+    args_t args = args_parse();
+
+    if (args == NULL || args->argc != 1) {
+        return 1;
+    } else {
+        for (int i = 0; i < args->argc; i++) {
+            int exit_code = execute_program(file_read(args->argv[i]),
+                                                      false, 0);
+            if (exit_code != 0) {
+                return exit_code;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int execute_program(file_t file, bool debug_mode, int debug_count) {
+    char[] program = alloc_array(char, 20000);
+    int prh = 0;
+    while (!file_eof(file)) {
+        string line = file_readline(file);
+        for (int c = 0; c < string_length(line); c++) {
+            program[prh] = string_charat(line, c);
+            prh++;
+        }
+    }
+
+    char[] tape = alloc_array(char, 30000);
+    bool running = true;
+    int iar = 0;
+    int dp = 0;
+    string input;
+
+    while (running) {
+        //input = readline();
+        char instruction = program[iar];
+        if (instruction == '>') {
+            dp++;
+        } else if (instruction == '<') {
+            dp--;
+        } else if (instruction == '+') {
+            tape[dp] = char_chr(char_ord(tape[dp]) + 1);
+        } else if (instruction == '-') {
+            tape[dp] = char_chr(char_ord(tape[dp]) - 1);
+        } else if (instruction == '[') {
+            if (char_ord(tape[dp]) == 0) {
+                int count = -1;
+                while (program[iar] != ']' || count != 0) {
+                    if (program[iar] == '[') {
+                        count++;
+                    } else if (program[iar] == ']') {
+                        count--;
+                    }
+                    iar++;
+                }
+            }
+        } else if (instruction == ']') {
+            if (char_ord(tape[dp]) != 0) {
+                int count = -1;
+                while (program[iar] != '[' || count != 0) {
+                    if (program[iar] == ']') {
+                        count++;
+                    } else if (program[iar] == '[') {
+                        count--;
+                    }
+                    iar--;
+                }
+            }
+        } else if (instruction == '.') {
+            printchar(tape[dp]);
+            flush();
+        } else if (instruction == ',') {
+            //tape[dp] = string_charat(input, 0);
+        } else {
+            running = false;
+        }
+        iar++;
+        if (debug_mode) {
+            debug(tape, dp, debug_count);
+        }
+    }
+    file_close(file);
+    return 0;
+}
+
+void debug(char[] tape, int dp, int n) {
+    print("[");
+    for (int i = 0; i < n - 1; i++) {
+        int val = char_ord(tape[i]);
+        if (val > 99) {
+        } else if (val > 9) {
+            print(" ");
+        } else {
+            print("  ");
+        }
+        printint(val);
+        print(",");
+    }
+    int val = char_ord(tape[n - 1]);
+    if (val > 99) {
+    } else if (val > 9) {
+        print(" ");
+    } else {
+        print("  ");
+    }
+    printint(val);
+    println("]");
+    int dp_pos = 3;
+    dp_pos += 4 * dp;
+    for (int i = 0; i < dp_pos; i++) {
+        print(" ");
+    }
+    print("^");
+    flush();
+    string _ = readline();
+}
