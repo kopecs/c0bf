@@ -9,6 +9,8 @@ int execute_program(file_t file, bool debug_mode, int debug_count);
 void debug(char[] tape, int dp, int n);
 
 int main() {
+    int* debug_count = alloc(int);
+    args_int("-d", debug_count);
     args_t args = args_parse();
 
     if (args == NULL || args->argc != 1) {
@@ -16,7 +18,7 @@ int main() {
     } else {
         for (int i = 0; i < args->argc; i++) {
             int exit_code = execute_program(file_read(args->argv[i]),
-                                                      false, 0);
+                                                      *debug_count > 0, *debug_count);
             if (exit_code != 0) {
                 return exit_code;
             }
